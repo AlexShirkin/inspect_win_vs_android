@@ -1,0 +1,26 @@
+=== meta_quest_avatar: FP32 vs FP16-sim ===
+samples: 530
+
+Per-element |ref - cand|:
+  mean=1.420830e-03  max=3.372043e-02  p95=6.639981e-03  p99=1.209543e-02
+
+Per-vector L2 distance:
+  mean=2.708338e-02  max=1.139447e-01  p95=6.150299e-02  p99=7.954726e-02
+
+Relative L2 (||diff|| / ||ref||):
+  mean=3.131310e-03  max=1.452282e-02
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999994  min=0.999904  p01=0.999943  p05=0.999978
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999988  pearson=0.999993
+  L2 matrix:     spearman=0.999996  pearson=0.999998
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9826  min=0.8000  p05=0.9000  p50=1.0000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.9857  cand=0.9857  delta=+0.0000
+
+Worst 20 samples by cosine: [190, 451, 504, 183, 25, 185, 42, 500, 22, 495, 522, 486, 466, 212, 87, 482, 23, 247, 145, 226]

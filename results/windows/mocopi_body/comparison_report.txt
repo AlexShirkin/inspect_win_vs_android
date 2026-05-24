@@ -1,0 +1,80 @@
+=== mocopi_body: FP32 vs FP16-sim ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=6.128415e-04  max=1.397181e-02  p95=2.647364e-03  p99=5.142395e-03
+
+Per-vector L2 distance:
+  mean=1.085840e-02  max=5.561281e-02  p95=2.582349e-02  p99=3.559575e-02
+
+Relative L2 (||diff|| / ||ref||):
+  mean=1.622550e-03  max=6.810755e-03
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999998  min=0.999977  p01=0.999982  p05=0.999985
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999999  pearson=0.999999
+  L2 matrix:     spearman=0.999999  pearson=1.000000
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9956  min=0.9000  p05=1.0000  p50=1.0000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7752  cand=0.7754  delta=+0.0002
+
+Worst 20 samples by cosine: [33, 41, 652, 220, 239, 38, 32, 634, 254, 250, 44, 642, 30, 258, 224, 37, 621, 645, 643, 227]
+
+=== mocopi_body: FP32 vs Android ExecuTorch ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=4.507644e-03  max=1.969655e-01  p95=2.378187e-02  p99=4.542788e-02
+
+Per-vector L2 distance:
+  mean=9.112908e-02  max=9.611058e-01  p95=2.308772e-01  p99=3.317101e-01
+
+Relative L2 (||diff|| / ||ref||):
+  mean=1.020851e-02  max=1.916894e-01
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999927  min=0.984466  p01=0.999439  p05=0.999825
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999877  pearson=0.999890
+  L2 matrix:     spearman=0.999941  pearson=0.999958
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9639  min=0.6000  p05=0.9000  p50=1.0000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7752  cand=0.7761  delta=+0.0010
+
+Worst 20 samples by cosine: [33, 630, 384, 291, 35, 38, 113, 248, 208, 653, 368, 112, 202, 260, 652, 42, 37, 255, 382, 29]
+
+=== mocopi_body: FP16-sim vs Android ExecuTorch ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=4.532299e-03  max=2.109373e-01  p95=2.343726e-02  p99=4.492173e-02
+
+Per-vector L2 distance:
+  mean=9.058799e-02  max=1.012085e+00  p95=2.257919e-01  p99=3.543489e-01
+
+Relative L2 (||diff|| / ||ref||):
+  mean=1.033850e-02  max=1.882297e-01
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999925  min=0.985099  p01=0.999413  p05=0.999812
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999878  pearson=0.999891
+  L2 matrix:     spearman=0.999936  pearson=0.999956
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9639  min=0.6000  p05=0.9000  p50=1.0000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7754  cand=0.7761  delta=+0.0007
+
+Worst 20 samples by cosine: [33, 630, 384, 291, 113, 35, 38, 248, 208, 112, 653, 368, 652, 260, 37, 202, 42, 46, 255, 171]

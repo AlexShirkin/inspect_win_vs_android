@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Experiment artifacts (large)
+results/windows/*/embeddings_*.npz
+*.npy.tmp
+*.pte
+*.etdump
+executorch/etrecord/
+executorch/etdump/
+data/*.npz
+data/*.npy
+
+weights/*.pth
