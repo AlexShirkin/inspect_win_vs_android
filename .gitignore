@@ -228,3 +228,12 @@ data/*.npz
 data/*.npy
 
 weights/*.pth
+
+# Large experiment artifacts
+results/**/embeddings_*.npz
+results/**/pte_run/
+results/**/*.raw
+results/**/*.etdp
+results/**/debug_output.bin
+*.pte
+

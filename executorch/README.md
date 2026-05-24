@@ -1,120 +1,131 @@
 # ExecuTorch / Android experiments
 
-Эта директория — для работы **на машине с настроенным ExecuTorch** (не на текущем Windows-компьютере).
+Работа на машине с Docker + ExecuTorch. Windows-эталоны уже в `results/windows/`.
 
-Windows-часть уже подготовила эталоны в `results/windows/`. Ваша задача — воспроизвести и расширить сравнение на реальном `.pte` inference.
+## Быстрый старт (уже снятые Android embeddings)
 
-## Контекст проблемы
-
-- **Задача boxing (mocopi body + legs):** на Windows FP32 валидация OK, на Android (ExecuTorch FP16) эмбеддинги сильно искажаются.
-- **Задача avatar library (meta_quest):** на Android работало хорошо.
-- Гипотеза: частичная поддержка FP16 операторов в ExecuTorch, неявные fp16↔fp32 casts, dtype mismatch при export.
-
-## Что уже сделано на Windows
-
-См. `results/windows/_summary/SUMMARY.md` после запуска `windows/run_all.py`.
-
-Для каждого эксперимента сохранены:
-- `embeddings_fp32.npz` — эталон
-- `embeddings_fp16.npz` — симуляция PyTorch FP16
-- `comparison_report.json` — метрики
-
-Android reference embeddings (уже есть в `data/`):
-- `android_upper_embeddings_fixed.npz` — body / upper
-- `android_lower_embeddings_fixed.npz` — legs / lower
-
-## Ваши задачи
-
-### 1. Сверить Android ExecuTorch с Windows эталонами
+Из корня `inspect_win_vs_android/`:
 
 ```bash
-# Скопировать repo + results/windows/ с Windows-машины
+python executorch/compare_with_windows.py --all
+python executorch/scripts/make_summary.py
+```
+
+## Docker: ваш текущий билд
+
+Монтирование репозитория (как в основном README):
+
+```bash
+# хост: pte_qualcomm -> /workspace
+docker exec -it executorch_container bash
+cd /workspace/workspace/install
+./build_mmd_nca_net.sh   # веса/joints вручную в model.py и mmd_nca_net.py
+```
+
+Пути внутри контейнера:
+
+| Переменная | Значение |
+|------------|----------|
+| `WORKSPACE` | `/workspace/workspace` |
+| `EXECUTORCH_ROOT` | `$WORKSPACE/executorch` |
+| `.pte` после build | `$EXECUTORCH_ROOT/deeplab_v3/<имя из pte_filename>.pte` |
+
+## Шаг 1 — сверка Android (готово)
+
+```bash
+cd /workspace/inspect_win_vs_android
 python executorch/compare_with_windows.py --experiment mocopi_body
 python executorch/compare_with_windows.py --experiment mocopi_legs
 ```
 
-Скрипт `compare_with_windows.py` (создать) должен:
-1. Загрузить `results/windows/<exp>/embeddings_fp32.npz`
-2. Загрузить Android `.npz` из `data/`
-3. Посчитать те же метрики, что `windows/src/metrics.py` (можно импортировать)
+## Шаг 2 — PTE batch на x86 QNN runner
 
-### 2. Layer-wise debug (ETRecord + ETDump)
+Проверяет **export + QNN backend** на тех же 833 poses (с нормализацией как на Windows).
 
-Для **boxing body** модели (худший кейс):
+```bash
+cd /workspace/inspect_win_vs_android
+chmod +x executorch/run_qnn_batch.sh
 
-1. Export с `generate_etrecord=True`
-2. Прогнать inference с debug → `ETDump`
-3. Inspector API: `calculate_numeric_gap` — найти первый слой с большим расхождением
+# body — подставьте свой .pte после build_mmd_nca_net.sh
+./executorch/run_qnn_batch.sh mocopi_body \
+  /workspace/workspace/executorch/deeplab_v3/mmd_nca_net_qualcomm_12_mocopi_body_front_proj_70999.pte
 
-Сохранять в:
-```
-results/executorch/<experiment>/
-  etrecord/
-  etdump/
-  layer_gaps.json
-  layer_gaps_report.txt
+# legs — переключите joints/weights в model.py, пересоберите, затем:
+./executorch/run_qnn_batch.sh mocopi_legs \
+  /workspace/workspace/executorch/deeplab_v3/mmd_nca_net_qualcomm_11_mocopi_legs_front_proj_15999.pte
 ```
 
-### 3. Проверить dtype при export
+Артефакты: `results/executorch/<exp>/pte_run/` + `pte_comparison_report.*`
 
-Чеклист:
-- [ ] Веса и вход трассировки одного dtype (оба fp16 или оба fp32)
-- [ ] `nn.Embedding` / `BatchNorm1d` / `GRU` / `Softmax` — какой dtype в графе
-- [ ] Есть ли `to(dtype=float32)` / `to(dtype=float16)` между слоями
+Для быстрой проверки: добавьте третий аргумент `10` (max 10 poses).
 
-### 4. XNNPACK CPU backend (контрольный эксперiment)
+## Шаг 3 — dtypes при export
 
-Экспортировать `.pte` для XNNPACK (CPU), прогнать те же 833 poses, сравнить с FP32.
+После правки `examples/models/mmd_nca_net/model.py`:
 
-Если XNNPACK ≈ FP32, а Qualcomm/HTP сильно отличается — проблема в backend, не в модели.
+```bash
+cd /workspace/workspace/executorch
+conda run -n executorch python \
+  /workspace/inspect_win_vs_android/executorch/scripts/inspect_export_dtypes.py \
+  --executorch-root /workspace/workspace/executorch
+```
 
-### 5. Meta Quest baseline
+## Шаг 4 — XNNPACK (контроль backend)
 
-Прогнать `meta_quest_avatar` через ExecuTorch FP16 на Android (если есть `.pte`).
+```bash
+conda run -n executorch python \
+  /workspace/inspect_win_vs_android/executorch/scripts/export_xnnpack_pte.py \
+  --executorch-root /workspace/workspace/executorch \
+  --out-dir /workspace/workspace/executorch/deeplab_v3 \
+  --name mmd_nca_body_xnnpack_fp32
+```
 
-**Контекст:** meta_quest на устройстве использовал **одну** модель (без legs). Для сравнения смотрите также **mocopi_body** как upper-only аналог — не combined boxing pipeline.
+Запуск (путь к runner зависит от вашей cmake-сборки, часто `build-x86/backends/xnnpack/xnn_executor_runner`):
 
-## Архитектура модели
+```bash
+# те же input_list + .raw из pte_run, другой --model_path на xnnpack .pte
+```
 
-Файл: `mmd_nca_net_mobile.py`
+Если XNNPACK ≈ FP32, а QNN/Android далеко — проблема в Qualcomm FP16/backend.
 
-Ключевые операторы (потенциально проблемные для FP16):
-- `BatchNorm1d` (bn1, bn2, bn3, bn4, bn5)
-- bidirectional `GRU` x4
-- `SelfAttentiveEncoder`: Linear → Tanh → Softmax → bmm
-- `F.relu` + Linear stack
+## Шаг 5 — Layer-wise ETDump
 
-Конфиги экспериментов — `windows/src/configs.py`.
+1. В `build_executorch_binary(...)` передать `dump_intermediate_outputs=True` (временно в `mmd_nca_net.py`).
+2. Пересобрать `.pte`.
+3. Прогнать runner с `--dump_intermediate_outputs --etdump_path etdump.etdp`.
+4. Анализ:
 
-## Формат данных
+```bash
+conda run -n executorch python \
+  /workspace/inspect_win_vs_android/executorch/scripts/analyze_etdump.py \
+  --etdump results/executorch/mocopi_legs/etdump/etdump.etdp \
+  --etrecord /path/to/etrecord.bin \
+  --out-dir results/executorch/mocopi_legs
+```
 
-**Boxing (merged_three):** pickled dict в `arr_0`:
-- `poses`: `[N, 30, J, 2]` — body J=12, legs J=11
-- `pose2group`, `pose2person`, ...
+Для ETRecord можно ориентироваться на `examples/qualcomm/scripts/export_example.py` (`generate_etrecord=True`).
 
-**Avatar:** `poses`: `[530, 30, 13, 3]`
+## Шаг 6 — итог
 
-## Ожидаемые артефакты (git)
+```bash
+python executorch/scripts/make_summary.py
+# обновить executorch/FINDINGS.md по pte_comparison + layer_gaps
+```
 
-Коммитить:
-- `executorch/scripts/*.py`
-- `executorch/compare_with_windows.py`
-- `results/executorch/**/layer_gaps*.json` (если не огромные)
-- `results/executorch/**/comparison_report.*`
+## Артефакты
 
-Не коммитить:
-- большие `.pte`, `.etdump` бинарники (добавить в `.gitignore`)
+| Путь | Содержимое |
+|------|------------|
+| `results/executorch/*/comparison_report.*` | Android vs Windows |
+| `results/executorch/*/pte_comparison_report.*` | PTE runner vs Windows |
+| `results/executorch/*/layer_gaps*` | ETDump summary |
+| `results/executorch/_summary/SUMMARY.md` | сводка |
 
-## Связь с Windows-коллегой
+Не коммитить: `*.pte`, `*.etdp`, большие `pte_run/*.raw`.
 
-| Windows (`windows/`) | ExecuTorch (`executorch/`) |
-|---------------------|----------------------------|
-| FP32 эталон | сверка с `.pte` output |
-| FP16 PyTorch sim | оценка «ожидаемого» FP16 drift |
-| метрики в JSON | layer-wise gap analysis |
-| SUMMARY.md | итоговый ROOT_CAUSE.md |
+## Связь с Windows
 
-После ваших экспериментов создайте `executorch/FINDINGS.md` с:
-1. слой/оператор первого большого расхождения
-2. отличие boxing vs meta_quest
-3. рекомендация: fp32 export, selective fp16, или fix preprocessing
+| Windows | ExecuTorch |
+|---------|------------|
+| `embeddings_fp32.npz` | эталон для PTE/Android |
+| `FINDINGS.md` | `executorch/FINDINGS.md` |

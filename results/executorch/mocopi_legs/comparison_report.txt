@@ -1,0 +1,53 @@
+=== mocopi_legs: Windows FP32 vs Android ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=1.441115e-02  max=3.944331e-01  p95=6.709314e-02  p99=1.250858e-01
+
+Per-vector L2 distance:
+  mean=2.800456e-01  max=1.693849e+00  p95=6.724030e-01  p99=8.331292e-01
+
+Relative L2 (||diff|| / ||ref||):
+  mean=3.491279e-02  max=2.073988e-01
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999406  min=0.978626  p01=0.995354  p05=0.997590
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999195  pearson=0.999197
+  L2 matrix:     spearman=0.999470  pearson=0.999499
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9331  min=0.5000  p05=0.8000  p50=0.9000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7570  cand=0.7544  delta=-0.0026
+
+Worst 20 samples by cosine: [279, 831, 441, 559, 53, 821, 545, 49, 447, 287, 540, 51, 550, 58, 55, 101, 832, 541, 24, 20]
+
+=== mocopi_legs: Windows FP16-sim vs Android ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=1.415138e-02  max=3.589783e-01  p95=6.542963e-02  p99=1.210935e-01
+
+Per-vector L2 distance:
+  mean=2.742632e-01  max=1.536105e+00  p95=6.647708e-01  p99=7.968639e-01
+
+Relative L2 (||diff|| / ||ref||):
+  mean=3.464302e-02  max=1.893647e-01
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999397  min=0.982200  p01=0.995412  p05=0.997595
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999170  pearson=0.999177
+  L2 matrix:     spearman=0.999492  pearson=0.999519
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9329  min=0.6000  p05=0.8000  p50=0.9000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7582  cand=0.7544  delta=-0.0038
+
+Worst 20 samples by cosine: [279, 831, 441, 559, 53, 821, 545, 49, 540, 287, 101, 447, 58, 550, 51, 817, 59, 50, 832, 48]

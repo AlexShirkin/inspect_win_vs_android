@@ -1,0 +1,26 @@
+=== mocopi_legs: Windows FP32 vs PTE QNN x86 ===
+samples: 833
+
+Per-element |ref - cand|:
+  mean=1.433924e-02  max=3.944331e-01  p95=6.648698e-02  p99=1.249638e-01
+
+Per-vector L2 distance:
+  mean=2.787460e-01  max=1.694878e+00  p95=6.726233e-01  p99=8.309237e-01
+
+Relative L2 (||diff|| / ||ref||):
+  mean=3.471287e-02  max=2.075248e-01
+
+Cosine similarity (ref vs cand, per sample):
+  mean=0.999413  min=0.978601  p01=0.995430  p05=0.997608
+
+Pairwise structure preservation:
+  cosine matrix: spearman=0.999206  pearson=0.999209
+  L2 matrix:     spearman=0.999477  pearson=0.999507
+
+Retrieval overlap@10 (ref neighbors vs cand neighbors):
+  mean=0.9342  min=0.5000  p05=0.8000  p50=0.9000  p95=1.0000
+
+Group retrieval@10 (same pose2group in top-10):
+  ref=0.7570  cand=0.7540  delta=-0.0030
+
+Worst 20 samples by cosine: [279, 831, 441, 559, 53, 821, 545, 49, 287, 447, 540, 51, 550, 58, 55, 832, 101, 541, 24, 20]
